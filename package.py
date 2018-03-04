@@ -95,7 +95,6 @@ def create_package(jsonfile, params, compression=zipfile.ZIP_STORED):
         desc = json.loads(Template(f.read()).substitute(params))
     paths = process_filelist(params, desc['files'])
     package = os.path.join(BUILD_DIR, desc['package'])
-    print package, paths
     create_zipfile(package, paths, compression)
 
 
