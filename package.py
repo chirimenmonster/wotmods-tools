@@ -8,14 +8,12 @@ from string import Template
 
 BUILD_DIR = 'build'
 CONFIG = 'config.ini'
-FILE_LIST = 'files.json'
-RELEASE_LIST = 'release.json'
 
 def get_config():
     inifile = ConfigParser.SafeConfigParser()
     inifile.read(CONFIG)
 
-    parameters = dict(inifile.items('mod'))
+    parameters = dict(inifile.items('wotmod'))
     for section in inifile.sections():
         for k, v in inifile.items(section):
             parameters[section + '_' + k] = v
@@ -116,10 +114,10 @@ def main():
         pass
     os.makedirs(BUILD_DIR)
 
-    create_wotmod(FILE_LIST, params)
+    create_wotmod(params['wotmod_files'], params)
 
-    if os.path.exists(RELEASE_LIST):
-        create_release(RELEASE_LIST, params)
+    if os.path.exists(params['release_files']):
+        create_release(params['release_files'], params)
 
 
 if __name__ == "__main__":
