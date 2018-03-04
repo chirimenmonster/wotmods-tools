@@ -48,10 +48,14 @@ def process_filelist(parameters, desc):
     for target in desc:
         if target['method'] == 'apply+python':
             for src in target['files']:
-                root, ext = os.path.splitext(src)
+                dir, file = os.path.split(src)
+                root, ext = os.path.splitext(file)
+                root2, inext = os.path.splitext(root)
+                if inext == '.in':
+                    root = root2
                 dst = root + '.pyc'
-                prepared = os.path.join(BUILD_DIR, src)
-                cooked = os.path.join(BUILD_DIR, dst)
+                prepared = os.path.join(BUILD_DIR, dir, root + ext)
+                cooked = os.path.join(BUILD_DIR, dir, dst)
                 release = os.path.join(target['root'], target['reldir'], os.path.basename(dst))
                 apply_template(src, prepared, parameters)
                 compile_python(prepared, cooked, target['reldir'])
@@ -66,8 +70,17 @@ def process_filelist(parameters, desc):
                 paths.append([ cooked, release])
         elif target['method'] == 'apply':
             for src in target['files']:
-                cooked = os.path.join(BUILD_DIR, src)
-                release = os.path.join(target['root'], target['reldir'], os.path.basename(src))
+                dir, file = os.path.split(src)
+                root, ext = os.path.splitext(file)
+                if ext == '' or ext == '.in':
+                    cooked = os.path.join(BUILD_DIR, dir, root)
+                else:
+                    root2, inext = os.path.splitext(root)
+                    if inext == '.in':
+                        cooked = os.path.join(BUILD_DIR, dir, root2 + ext)
+                    else:
+                        cooked = os.path.join(BUILD_DIR, src)
+                release = os.path.join(target['root'], target['reldir'], os.path.basename(cooked))
                 apply_template(src, cooked, parameters)
                 paths.append([ cooked, release ])
         elif target['method'] == 'plain':
