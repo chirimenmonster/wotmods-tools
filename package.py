@@ -20,20 +20,64 @@ def get_config():
     return parameters
 
 
-def compile_python(src, dst, virtualdir):
+def makedirs(dir):
     try:
-        os.makedirs(os.path.dirname(dst))
+        os.makedirs(dir)
     except:
         pass
-    py_compile.compile(file=src, cfile=dst, dfile=os.path.join(virtualdir, os.path.basename(src)), doraise=True)
+
+
+def compile_python(src, dst, virtualdir):
+    makedirs(os.path.dirname(dst))
+    vfile = os.path.join(virtualdir, os.path.basename(src))
+    py_compile.compile(file=src, cfile=dst, dfile=vfile, doraise=True)
+
 
 def apply_template(src, dst, parameters):
-    try:
-        os.makedirs(os.path.dirname(dst))
-    except:
-        pass
+    makedirs(os.path.dirname(dst))
     with open(src, 'r') as in_file, open(dst, 'w') as out_file:
         out_file.write(Template(in_file.read()).substitute(parameters))
+
+
+def feature_apply(src, params):
+    srcdir, srcfile = os.path.split(src)
+    dstdir = os.path.join(BUILD_DIR, srcdir)
+    name, ext = os.path.splitext(srcfile)
+    if ext == '' or ext == '.in':
+        dst = os.path.join(dstdir, name)
+    else:
+        inname, inext = os.path.splitext(name)
+        if inext == '.in':
+            dst = os.path.join(dstdir, inname + ext)
+        else:
+            dst = os.path.join(dstdir, name + ext)
+    apply_template(src, dst, params)
+    return dst
+
+
+def feature_compile(src, reldir):
+    srcdir, srcfile = os.path.split(src)
+    dstdir = os.path.join(BUILD_DIR, srcdir)
+    name, ext = os.path.splitext(src)
+    dst = os.path.join(dstdir, name + '.pyc')
+    compile_python(src, dst, reldir)
+    return dst
+
+
+def process_file(method, file, reldir, params):
+    if method == 'apply+python':
+        file = feature_apply(file, params)
+        file = feature_compile(file, reldir)
+    elif method == 'python':
+        file = feature_compile(file, reldir)
+    elif method == 'apply':
+        file = feature_apply(file, params)
+    elif method == 'plain':
+        pass
+    else:
+        raise ValueError('unknown methd: {}'.format(target['method']))
+    return file
+
 
 def split(path):
     head, tail = os.path.split(path)
@@ -42,53 +86,6 @@ def split(path):
     result = split(head)
     result.append(path)
     return result
-
-def process_filelist(parameters, desc):
-    paths = []
-    for target in desc:
-        if target['method'] == 'apply+python':
-            for src in target['files']:
-                dir, file = os.path.split(src)
-                root, ext = os.path.splitext(file)
-                root2, inext = os.path.splitext(root)
-                if inext == '.in':
-                    root = root2
-                dst = root + '.pyc'
-                prepared = os.path.join(BUILD_DIR, dir, root + ext)
-                cooked = os.path.join(BUILD_DIR, dir, dst)
-                release = os.path.join(target['root'], target['reldir'], os.path.basename(dst))
-                apply_template(src, prepared, parameters)
-                compile_python(prepared, cooked, target['reldir'])
-                paths.append([ cooked, release ])
-        elif target['method'] == 'python':
-            for src in target['files']:
-                root, ext = os.path.splitext(src)
-                dst = root + '.pyc'
-                cooked = os.path.join(BUILD_DIR, dst)
-                release = os.path.join(target['root'], target['reldir'], os.path.basename(dst))
-                compile_python(src, cooked, target['reldir'])
-                paths.append([ cooked, release])
-        elif target['method'] == 'apply':
-            for src in target['files']:
-                dir, file = os.path.split(src)
-                root, ext = os.path.splitext(file)
-                if ext == '' or ext == '.in':
-                    cooked = os.path.join(BUILD_DIR, dir, root)
-                else:
-                    root2, inext = os.path.splitext(root)
-                    if inext == '.in':
-                        cooked = os.path.join(BUILD_DIR, dir, root2 + ext)
-                    else:
-                        cooked = os.path.join(BUILD_DIR, src)
-                release = os.path.join(target['root'], target['reldir'], os.path.basename(cooked))
-                apply_template(src, cooked, parameters)
-                paths.append([ cooked, release ])
-        elif target['method'] == 'plain':
-            for src in target['files']:
-                cooked = src
-                release = os.path.join(target['root'], target['reldir'], os.path.basename(src))
-                paths.append([ cooked, release ])
-    return paths
 
 
 def create_zipfile(package, paths, compression=zipfile.ZIP_DEFLATED):
@@ -103,10 +100,15 @@ def create_zipfile(package, paths, compression=zipfile.ZIP_DEFLATED):
             donelist.append(target)
 
 
-def create_package(jsonfile, params, compression=zipfile.ZIP_STORED):
+def package(jsonfile, params, compression=zipfile.ZIP_STORED):
     with open(jsonfile, 'r') as f:
-        desc = json.loads(Template(f.read()).substitute(params))
-    paths = process_filelist(params, desc['files'])
+        desc = json.loads(Template(f.read()).substitute(params))   
+    paths = []
+    for target in desc['files']:
+        for file in target['source']:
+            file = process_file(target['method'], file, target['reldir'], params)
+            release = os.path.join(target['root'], target['reldir'], os.path.basename(file))
+            paths.append([ file, release ])
     package = os.path.join(BUILD_DIR, desc['package'])
     create_zipfile(package, paths, compression)
 
@@ -119,10 +121,10 @@ def main():
         pass
     os.makedirs(BUILD_DIR)
 
-    create_package(params['wotmod_files'], params)
+    package(params['wotmod_files'], params)
 
     if 'release_files' in params and os.path.exists(params['release_files']):
-        create_package(params['release_files'], params, compression=zipfile.ZIP_DEFLATED)
+        package(params['release_files'], params, compression=zipfile.ZIP_DEFLATED)
 
 
 if __name__ == "__main__":
