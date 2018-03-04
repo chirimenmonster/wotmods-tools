@@ -90,20 +90,13 @@ def create_zipfile(package, paths, compression=zipfile.ZIP_DEFLATED):
             donelist.append(target)
 
 
-def create_wotmod(jsonfile, params):
-    with open(jsonfile, 'r') as f:
-        desc = json.loads(Template(f.read()).substitute(params))
-    paths = process_filelist(params, desc['files'])
-    package = os.path.join(BUILD_DIR, params['package'])
-    create_zipfile(package, paths, zipfile.ZIP_STORED)
-
-
-def create_release(jsonfile, params):
+def create_package(jsonfile, params, compression=zipfile.ZIP_STORED):
     with open(jsonfile, 'r') as f:
         desc = json.loads(Template(f.read()).substitute(params))
     paths = process_filelist(params, desc['files'])
     package = os.path.join(BUILD_DIR, desc['package'])
-    create_zipfile(package, paths, zipfile.ZIP_DEFLATED)
+    print package, paths
+    create_zipfile(package, paths, compression)
 
 
 def main():
@@ -114,10 +107,10 @@ def main():
         pass
     os.makedirs(BUILD_DIR)
 
-    create_wotmod(params['wotmod_files'], params)
+    create_package(params['wotmod_files'], params)
 
-    if os.path.exists(params['release_files']):
-        create_release(params['release_files'], params)
+    if 'release_files' in params and os.path.exists(params['release_files']):
+        create_package(params['release_files'], params, compression=zipfile.ZIP_DEFLATED)
 
 
 if __name__ == "__main__":
