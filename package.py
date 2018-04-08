@@ -6,6 +6,9 @@ import zipfile
 import ConfigParser
 import json
 from string import Template
+from datetime import datetime
+
+import committime
 
 CONFIG = 'config.ini'
 DEFAULT_BUILDDIR = 'build'
@@ -45,7 +48,9 @@ class Control(object):
         self.__params['BUILDDIR'] = self.__buildDir
         self.__process = Process(self.__buildDir)
         self.makeBuildDir(self.__buildDir)
-
+        self.__commitTimeDict = committime.getCommitTimeDict()
+        self.__lastupdate = max(self.__commitTimeDict.values())
+    
     def makeBuildDir(self, buildDir):
         try:
             shutil.rmtree(buildDir)
@@ -77,12 +82,15 @@ class Control(object):
         pkgsrcs = self.__params[PKGDEF[domain]]
         pkgname = os.path.join(self.__buildDir, self.__params[PKGNAME[domain]])
         packageDef = PackageDef(pkgsrcs, self.__params)
-        package = Package()
+        package = Package(self.__lastupdate)
         for recipe in packageDef.getRecipes():
+            timestamp = self.__commitTimeDict.get(recipe.file, None)
+            recipe.timestamp = timestamp
             file = self.__process.command(recipe)
             release = os.path.join(recipe.root, recipe.reldir, os.path.basename(file))
-            package.add(file, release)
-            # print '{}: {} -> {}'.format(recipe.method, recipe.file, file)
+            package.add(file, release, timestamp)
+            #print '{}: {} -> {} ({})'.format(recipe.method, recipe.file, file, timestamp)
+        #package.list()
         package.createZipfile(pkgname, compression)
         return pkgname
 
@@ -186,7 +194,9 @@ class Process(object):
         dst = self.__getFilename_compile(src)
         makedirs(os.path.dirname(dst))
         vfile = os.path.join(recipe.reldir, os.path.basename(src))
+        os.utime(src, (recipe.timestamp, recipe.timestamp))
         py_compile.compile(file=src, cfile=dst, dfile=vfile, doraise=True)
+        os.utime(dst, (recipe.timestamp, recipe.timestamp))
         return dst
 
     def __feature_apply(self, src, recipe):
@@ -194,32 +204,41 @@ class Process(object):
         makedirs(os.path.dirname(dst))
         with open(src, 'r') as in_file, open(dst, 'w') as out_file:
             out_file.write(Template(in_file.read()).substitute(recipe.params))
+        os.utime(dst, (recipe.timestamp, recipe.timestamp))
         return dst
 
 
 class Package(object):
 
-    def __init__(self):
+    def __init__(self, lastupdate):
         self.__dirs = {}
         self.__list = []
+        self.__lastupdate = lastupdate
 
-    def add(self, src, dst):
+    def add(self, src, dst, timestamp):
         path = ''
         for dir in splitpath(dst)[0:-1]:
             path = os.path.join(path, dir)
             if path not in self.__dirs:
                 self.__dirs[path] = True
-                self.__list.append([ '.', path ])
-        self.__list.append([src, dst])
+                self.__list.append([ None, path, None ])
+        self.__list.append([src, dst, timestamp])
 
     def list(self):
-        for source, target in self.__list:
-            print source, target
+        for source, target, timestamp in self.__list:
+            print source, target, timestamp
 
     def createZipfile(self, pkgname, compression):
         with zipfile.ZipFile(pkgname, 'w', compression=compression) as file:
-            for source, target in self.__list:
-                file.write(source, target, compression)
+            for source, target, timestamp in self.__list:
+                t = datetime.fromtimestamp(timestamp or self.__lastupdate)
+                zipinfo = zipfile.ZipInfo(target, t.timetuple())
+                if source:
+                    with open(source, 'rb') as f:
+                        file.writestr(zipinfo, f.read(), compression)
+                    #file.write(source, target, compression)
+                else:
+                    file.writestr(zipinfo, '', zipfile.ZIP_STORED)
 
 
 class Recipe(object):
