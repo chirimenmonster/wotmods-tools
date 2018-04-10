@@ -82,15 +82,18 @@ class Control(object):
         pkgsrcs = self.__params[PKGDEF[domain]]
         pkgname = os.path.join(self.__buildDir, self.__params[PKGNAME[domain]])
         packageDef = PackageDef(pkgsrcs, self.__params)
-        package = Package(self.__lastupdate)
+        package = Package()
+        lastupdate = 0
         for recipe in packageDef.getRecipes():
             timestamp = self.__commitTimeDict.get(recipe.file, None)
             recipe.timestamp = timestamp
             file = self.__process.command(recipe)
             release = os.path.join(recipe.root, recipe.reldir, os.path.basename(file))
             package.add(file, release, timestamp)
+            lastupdate = max(lastupdate, timestamp)
             #print '{}: {} -> {} ({})'.format(recipe.method, recipe.file, file, timestamp)
         #package.list()
+        package.setLastupdate(lastupdate)
         package.createZipfile(pkgname, compression)
         return pkgname
 
@@ -194,9 +197,11 @@ class Process(object):
         dst = self.__getFilename_compile(src)
         makedirs(os.path.dirname(dst))
         vfile = os.path.join(recipe.reldir, os.path.basename(src))
-        os.utime(src, (recipe.timestamp, recipe.timestamp))
-        py_compile.compile(file=src, cfile=dst, dfile=vfile, doraise=True)
-        os.utime(dst, (recipe.timestamp, recipe.timestamp))
+        tmpfile = os.path.join(os.path.dirname(dst), os.path.basename(src))
+        if src != tmpfile:
+            shutil.copy(src, tmpfile)
+        os.utime(tmpfile, (recipe.timestamp, recipe.timestamp))
+        py_compile.compile(file=tmpfile, cfile=dst, dfile=vfile, doraise=True)
         return dst
 
     def __feature_apply(self, src, recipe):
@@ -204,15 +209,17 @@ class Process(object):
         makedirs(os.path.dirname(dst))
         with open(src, 'r') as in_file, open(dst, 'w') as out_file:
             out_file.write(Template(in_file.read()).substitute(recipe.params))
-        os.utime(dst, (recipe.timestamp, recipe.timestamp))
         return dst
 
 
 class Package(object):
 
-    def __init__(self, lastupdate):
+    def __init__(self):
         self.__dirs = {}
         self.__list = []
+        self.__lastupdate = None
+
+    def setLastupdate(self, lastupdate):
         self.__lastupdate = lastupdate
 
     def add(self, src, dst, timestamp):
