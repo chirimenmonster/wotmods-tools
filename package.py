@@ -228,7 +228,7 @@ class Package(object):
             path = os.path.join(path, dir)
             if path not in self.__dirs:
                 self.__dirs[path] = True
-                self.__list.append([ None, path, None ])
+                self.__list.append([ None, path + '/', None ])
         self.__list.append([src, dst, timestamp])
 
     def list(self):
