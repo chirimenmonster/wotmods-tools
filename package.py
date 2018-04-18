@@ -50,6 +50,7 @@ class Control(object):
         self.makeBuildDir(self.__buildDir)
         self.__commitTimeDict = committime.getCommitTimeDict()
         self.__lastupdate = max(self.__commitTimeDict.values())
+        self.__configTimestamp = self.__commitTimeDict[config]
     
     def makeBuildDir(self, buildDir):
         try:
@@ -86,12 +87,15 @@ class Control(object):
         lastupdate = 0
         for recipe in packageDef.getRecipes():
             timestamp = self.__commitTimeDict.get(recipe.file, None)
-            recipe.timestamp = timestamp
+            if 'apply' in recipe.method:
+                recipe.timestamp = max(timestamp, self.__configTimestamp)
+            else:
+                recipe.timestamp = timestamp
             file = self.__process.command(recipe)
             release = os.path.join(recipe.root, recipe.reldir, os.path.basename(file))
-            package.add(file, release, timestamp)
-            lastupdate = max(lastupdate, timestamp)
-            #print '{}: {} -> {} ({})'.format(recipe.method, recipe.file, file, timestamp)
+            package.add(file, release, recipe.timestamp)
+            lastupdate = max(lastupdate, recipe.timestamp)
+            #print '{}: {} -> {} ({})'.format(recipe.method, recipe.file, file, recipe.timestamp)
         #package.list()
         package.setLastupdate(lastupdate)
         package.createZipfile(pkgname, compression)
