@@ -49,12 +49,11 @@ class Control(object):
         self.__process = Process(self.__buildDir)
         if not hasBuildDir:
             self.makeBuildDir(self.__buildDir)
-        self.__commitTimeDict = committime.getCommitTimeDict()
-        self.__lastupdate = max(self.__commitTimeDict.values())
+        self.__commitTime = committime.CommitTime()
         if isinstance(config, list):
-            self.__configTimestamp = max([ self.__commitTimeDict.get(f, 0) for f in config ])
+            self.__configTimestamp = max([ self.__commitTime.getTimestamp(f) for f in config ])
         else:
-            self.__configTimestamp = self.__commitTimeDict[config]
+            self.__configTimestamp = self.__commitTime.getTimestamp(config)
     
     def makeBuildDir(self, buildDir):
         try:
@@ -90,7 +89,7 @@ class Control(object):
         package = Package()
         lastupdate = 0
         for recipe in packageDef.getRecipes():
-            timestamp = self.__commitTimeDict.get(recipe.file, None)
+            timestamp = self.__commitTime.getTimestamp(recipe.file)
             if 'apply' in recipe.method:
                 recipe.timestamp = max(timestamp, self.__configTimestamp)
             else:
