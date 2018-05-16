@@ -42,15 +42,19 @@ def splitpath(path):
     
 class Control(object):
 
-    def __init__(self, config=CONFIG):
+    def __init__(self, config=CONFIG, hasBuildDir=False):
         self.setConfig(config)
         self.__buildDir = self.__params.get('build_dir', DEFAULT_BUILDDIR)
         self.__params['BUILDDIR'] = self.__buildDir
         self.__process = Process(self.__buildDir)
-        self.makeBuildDir(self.__buildDir)
+        if not hasBuildDir:
+            self.makeBuildDir(self.__buildDir)
         self.__commitTimeDict = committime.getCommitTimeDict()
         self.__lastupdate = max(self.__commitTimeDict.values())
-        self.__configTimestamp = self.__commitTimeDict[config]
+        if isinstance(config, list):
+            self.__configTimestamp = max([ self.__commitTimeDict.get(f, 0) for f in config ])
+        else:
+            self.__configTimestamp = self.__commitTimeDict[config]
     
     def makeBuildDir(self, buildDir):
         try:
