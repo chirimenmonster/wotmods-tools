@@ -39,54 +39,52 @@ def splitpath(path):
         return [ tail ]
     return splitpath(head) + [ tail ]
 
-    
+
+class Config(object):
+
+    def __init__(self, config=CONFIG):
+        inifile = ConfigParser.SafeConfigParser()
+        inifile.read(config)
+        self.__params = dict(inifile.items(SECTION_WOTMOD))
+        for section in inifile.sections():
+            for k, v in inifile.items(section):
+                self.__params[section + '_' + k] = v
+
+    def get(self, name, default=None):
+        return self.__params.get(name, default)
+
+    def getDict(self):
+        return self.__params
+
+
 class Control(object):
 
-    def __init__(self, config=CONFIG, hasBuildDir=False):
-        self.setConfig(config)
-        self.__buildDir = self.__params.get('build_dir', DEFAULT_BUILDDIR)
-        self.__params['BUILDDIR'] = self.__buildDir
-        self.__process = Process(self.__buildDir)
-        if not hasBuildDir:
-            self.makeBuildDir(self.__buildDir)
+    def __init__(self, config=CONFIG):
         self.__commitTime = committime.CommitTime()
         if isinstance(config, list):
             self.__configTimestamp = max([ self.__commitTime.getTimestamp(f) for f in config ])
         else:
             self.__configTimestamp = self.__commitTime.getTimestamp(config)
+        self.setConfig(config)
+        self.makeBuildDir()
     
-    def makeBuildDir(self, buildDir):
+    def setConfig(self, config=CONFIG):
+        self.__params = Config(config)
+        self.__buildDir = self.__params.get('build_dir', DEFAULT_BUILDDIR)
+
+    def makeBuildDir(self):
         try:
-            shutil.rmtree(buildDir)
+            shutil.rmtree(self.__buildDir)
         except:
             pass
-        os.makedirs(buildDir)
-
-    def setConfig(self, config=CONFIG):
-        inifile = ConfigParser.SafeConfigParser()
-        inifile.read(config)
-        params = dict(inifile.items(SECTION_WOTMOD))
-        for section in inifile.sections():
-            for k, v in inifile.items(section):
-                params[section + '_' + k] = v
-        self.__params = params
-        return params
-
-    def getParam(self, key):
-        return self.__params[key]
-
-    def setPackageDef(self, filename):
-        with open(filename, 'r') as file:
-            text = Template(file.read()).substitute(self.__params)
-            packageDef = json.loads(text)
-        self.__packageDef = packageDef
-        return packageDef
+        os.makedirs(self.__buildDir)
 
     def makePackage(self, domain=SECTION_WOTMOD, compression=zipfile.ZIP_STORED):
-        pkgsrcs = self.__params[PKGDEF[domain]]
-        pkgname = os.path.join(self.__buildDir, self.__params[PKGNAME[domain]])
-        packageDef = PackageDef(pkgsrcs, self.__params)
+        pkgsrcs = self.__params.get(PKGDEF[domain])
+        pkgname = os.path.join(self.__buildDir, self.__params.get(PKGNAME[domain]))
+        packageDef = PackageDef(pkgsrcs, self.__params.getDict())
         package = Package()
+        process = Process(self.__buildDir)
         lastupdate = 0
         for recipe in packageDef.getRecipes():
             timestamp = self.__commitTime.getTimestamp(recipe.file)
@@ -94,7 +92,7 @@ class Control(object):
                 recipe.timestamp = max(timestamp, self.__configTimestamp)
             else:
                 recipe.timestamp = timestamp
-            file = self.__process.command(recipe)
+            file = process.command(recipe)
             release = os.path.join(recipe.root, recipe.reldir, os.path.basename(file))
             package.add(file, release, recipe.timestamp)
             lastupdate = max(lastupdate, recipe.timestamp)
