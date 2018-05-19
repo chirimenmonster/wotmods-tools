@@ -87,11 +87,9 @@ class Control(object):
         process = Process(self.__buildDir)
         lastupdate = 0
         for recipe in packageDef.getRecipes():
-            timestamp = self.__commitTime.getTimestamp(recipe.file)
+            recipe.timestamp = self.__commitTime.getTimestamp(recipe.file)
             if 'apply' in recipe.method:
-                recipe.timestamp = max(timestamp, self.__configTimestamp)
-            else:
-                recipe.timestamp = timestamp
+                recipe.timestamp = max(recipe.timestamp, self.__configTimestamp)
             file = process.command(recipe)
             release = os.path.join(recipe.root, recipe.reldir, os.path.basename(file))
             package.add(file, release, recipe.timestamp)
