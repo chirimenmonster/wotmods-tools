@@ -60,6 +60,7 @@ class Config(object):
 class Control(object):
 
     def __init__(self, config=CONFIG):
+        self.__lastupdate = 0
         self.__commitTime = committime.CommitTime()
         if isinstance(config, list):
             self.__configTimestamp = max([ self.__commitTime.getTimestamp(f) for f in config ])
@@ -82,55 +83,58 @@ class Control(object):
     def makePackage(self, domain=SECTION_WOTMOD, compression=zipfile.ZIP_STORED):
         pkgsrcs = self.__params.get(PKGDEF[domain])
         pkgname = os.path.join(self.__buildDir, self.__params.get(PKGNAME[domain]))
-        packageDef = PackageDef(pkgsrcs, self.__params.getDict())
+        packageDef = PackageDef(pkgsrcs, self.__params.getDict(), self.__commitTime, self.__configTimestamp, self.__lastupdate)
+        self.__lastupdate = packageDef.getLastupdate()
+        packageDef.dump()
+        print 'Lastupdate: {}'.format(datetime.fromtimestamp(self.__lastupdate))
         package = Package()
         process = Process(self.__buildDir)
-        lastupdate = 0
         for recipe in packageDef.getRecipes():
-            recipe.timestamp = self.__commitTime.getTimestamp(recipe.file)
-            if 'apply' in recipe.method:
-                recipe.timestamp = max(recipe.timestamp, self.__configTimestamp)
-            file = process.command(recipe)
-            release = os.path.join(recipe.root, recipe.reldir, os.path.basename(file))
-            package.add(file, release, recipe.timestamp)
-            lastupdate = max(lastupdate, recipe.timestamp)
-            #print '{}: {} -> {} ({})'.format(recipe.method, recipe.file, file, recipe.timestamp)
+            package.add(*process.command(recipe))
         #package.list()
-        package.setLastupdate(lastupdate)
+        package.setLastupdate(packageDef.getLastupdate())
         package.createZipfile(pkgname, compression)
         return pkgname
 
 
 class PackageDef(object):
 
-    def __init__(self, filename, params):
+    def __init__(self, filename, params, commitTime, configTimestamp, lastupdate):
+        self.__commitTime = commitTime
+        self.__configTimestamp = configTimestamp
+        self.__lastupdate = lastupdate
         self.__params = params
+        self.__process = Process(self.__params.get('build_dir', DEFAULT_BUILDDIR))
         with open(filename, 'r') as file:
             text = Template(file.read()).substitute(self.__params)
             packageDef = json.loads(text)
         self.__packageDef = packageDef
+        self.__recipes = []
+        for desc in self.__packageDef['sources']:
+            recipes = self.parse(desc)
+            self.__recipes.extend(recipes)
 
     def get(self, key):
         return self.__params[key]
 
     def getRecipes(self):
-        self.__recipes = []
-        for desc in self.__packageDef['sources']:
-            recipes = self.parse(desc)
-            self.__recipes.extend(recipes)
         return self.__recipes
+
+    def getLastupdate(self):
+        return max([ r.timestamp for r in self.__recipes ])
+
+    def dump(self):
+        for recipe in self.__recipes:
+            print '{}: {}: {} -> {}'.format(datetime.fromtimestamp(recipe.timestamp), recipe.method,
+                    recipe.file, recipe.vpath)
 
     def parse(self, desc):
         recipes = []
         for file in desc.get('files', []):
-            recipes.append(self.__parseSource(desc, file))
+            recipes.append(self.__getRecipe(file, desc.get('reldir', ''), desc))
         for dir in desc.get('dirs', []):
             recipes.extend(self.__parseSrcDir(desc, dir))
         return recipes
-
-    def __parseSource(self, desc, srcfile):
-        recipe = Recipe(srcfile, desc.get('reldir', ''), desc, self.__params)
-        return recipe
 
     def __parseSrcDir(self, desc, srcdir):
         recipes = []
@@ -144,9 +148,20 @@ class PackageDef(object):
                     continue
                 if 'exclude' in desc and re.search(desc['exclude'], file):
                     continue
-                recipes.append(Recipe(os.path.join(root, file), reldir, desc, self.__params))
+                recipes.append(self.__getRecipe(os.path.join(root, file), reldir, desc))
         return recipes
- 
+
+    def __getRecipe(self, src, reldir, desc):
+        timestamp = self.__commitTime.getTimestamp(src) or self.__lastupdate
+        if 'apply' in desc['method']:
+            timestamp = max(timestamp, self.__configTimestamp)
+        dst = self.__process.getFilename(desc['method'], src)
+        vpath = os.path.join(desc.get('root', ''), reldir, os.path.basename(dst))
+        recipe = Recipe(src, reldir, desc, self.__params, timestamp)
+        recipe.dst = dst
+        recipe.vpath = vpath
+        return recipe
+
 
 class Process(object):
 
@@ -166,7 +181,7 @@ class Process(object):
         for method in recipe.method.split('+'):
             if method != 'plain':
                 file = self.__feature[method](file, recipe)
-        return file
+        return file, recipe.vpath, recipe.timestamp
 
     def getFilename(self, method, file):
         for m in method.split('+'):
@@ -253,13 +268,14 @@ class Package(object):
 
 class Recipe(object):
 
-    def __init__(self, file, reldir, target, params):
+    def __init__(self, file, reldir, target, params, timestamp):
         self.file = file
         self.reldir = reldir
         self.method = target['method']
         self.root = target.get('root', '')
         self.params = params
- 
+        self.timestamp = timestamp
+
 
 def main():
     control = Control()
