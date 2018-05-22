@@ -150,7 +150,6 @@ class Resources(object):
         return recipes
 
     def __getRecipe(self, src, reldir, desc):
-        #timestamp = self.__commitTime.getTimestamp(src) or self.__lastupdate
         timestamp = self.__commitTime.getTimestamp(src)
         recipe = Recipe(src, reldir, desc, timestamp, self.__params)
         return recipe
@@ -263,6 +262,8 @@ class ZipPackage(object):
                         file.writestr(zipinfo, f.read(), compression)
                 else:
                     file.writestr(zipinfo, '', zipfile.ZIP_STORED)
+        timestamp = max([ d[2] for d in self.__list ])
+        os.utime(pkgname, (timestamp, timestamp))
 
 
 class Recipe(object):

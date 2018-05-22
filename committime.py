@@ -9,7 +9,7 @@ def getFileList():
     return commands.getoutput('git ls-files -z').split('\0')[:-1]
 
 def getGitCommitLogs():
-    return commands.getoutput('git log -m -r --name-only --no-color --pretty=raw -z').split('\0\0')
+    return commands.getoutput('git log -r --name-only --no-color --pretty=raw -z').split('\0\0')
 
 def getChangeFiles():
     result = commands.getoutput('git diff --ignore-cr-at-eol --numstat').split('\n')
