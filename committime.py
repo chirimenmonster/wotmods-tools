@@ -57,6 +57,9 @@ class CommitTime(object):
     def getTimestamp(self, file):
         return self.__timestamp.get(file, int(os.stat(file).st_mtime))
 
+    def setTimestamp(self, file, timestamp):
+        self.__timestamp[file] = int(timestamp)
+
     def dump(self):
         for k, v in self.__timestamp.items():
             print '{} {}'.format(datetime.fromtimestamp(v), k)

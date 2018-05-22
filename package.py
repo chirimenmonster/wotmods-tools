@@ -96,7 +96,8 @@ class Control(object):
         for recipe in resources.getRecipes():
             file, vpath, timestamp = Process().command(recipe)
             zipPackage.add(file, vpath, timestamp)
-        zipPackage.create(pkgname, compression)
+        timestamp = zipPackage.create(pkgname, compression)
+        self.__commitTime.setTimestamp(pkgname, timestamp)
         return pkgname
 
 
@@ -263,7 +264,7 @@ class ZipPackage(object):
                 else:
                     file.writestr(zipinfo, '', zipfile.ZIP_STORED)
         timestamp = max([ d[2] for d in self.__list ])
-        os.utime(pkgname, (timestamp, timestamp))
+        return timestamp
 
 
 class Recipe(object):
