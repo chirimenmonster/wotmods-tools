@@ -1,10 +1,11 @@
 import sys
 import os
-
 from struct import unpack
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape
 import base64
+from argparse import ArgumentParser
+import re
 
 class XmlUnpacker:
     PACKED_HEADER = 0x62a14e45
@@ -202,15 +203,40 @@ def convert(src, dst, filenameRoot=False):
     else:
         sys.stdout.write(text)
 
+        
+def getFileList(files):
+    for path in files:
+        if os.path.isdir(path):
+            for root, dirs, files in os.walk(path):
+                for file in files:
+                    yield os.path.join(root, file)
+        else:
+            yield path
+
+
+def do_command(options):
+    cwd = os.getcwd()
+    if options.base_dir:
+        os.chdir(options.base_dir)
+    for src in getFileList(options.files):
+        if options.pattern:
+            if not re.match(options.pattern, src):
+                continue
+        if options.extract_dir:
+            dst = os.path.join(cwd, options.extract_dir, src)
+            dstdir = os.path.dirname(dst)
+            if not os.path.exists(dstdir):
+                os.makedirs(dstdir)
+        else:
+            dst = None
+        convert(src, dst, True)
+
+
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    if not args:
-        print 'XmlUnpacker.py file'
-        sys.exit()
-    for file in args:
-        convert(file, None, filenameRoot=True)
-        #try:
-        #    convert(file, file + '.new')
-        #except:
-        #    print 'maybe not XML file: {}'.format(file)
-        #    continue
+    argparser = ArgumentParser()
+    argparser.add_argument('-b', metavar='basedir', dest='base_dir', help='base directory')
+    argparser.add_argument('-d', metavar='exdir', dest='extract_dir', help='extract files into exdir')
+    argparser.add_argument('-p', dest='pattern', help='files pattern')
+    argparser.add_argument('files', nargs='+')
+    settings = argparser.parse_args()
+    do_command(settings)

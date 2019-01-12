@@ -30,8 +30,6 @@ if __name__ == '__main__':
     argparser.add_argument('-p', dest='pattern', help='files pattern')
     argparser.add_argument('zipfile')
     argparser.add_argument('files', nargs='*')
-    
-    #print argparser.parse_args()
     settings = argparser.parse_args()
     do_command(settings)
     
