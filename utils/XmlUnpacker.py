@@ -7,6 +7,8 @@ import base64
 from argparse import ArgumentParser
 import re
 
+import path as pathtool
+
 class XmlUnpacker:
     PACKED_HEADER = 0x62a14e45
     stream = None
@@ -215,3 +217,21 @@ def convert(src, dst, filenameRoot=False):
     root = getElementTree(src, filenameRoot)
     outputElementTree(root, dst)
 
+
+def unpackall(files, base_dir=None, extract_dir=None, pattern=None):
+    for path in pathtool.getFileList(files, base_dir, pattern):
+        src = os.path.join(base_dir, path) if base_dir else path
+        dst = os.path.join(extract_dir, path) if extract_dir else None
+        convert(src, dst, True)
+
+
+if __name__ == '__main__':
+    argparser = ArgumentParser()
+    argparser.add_argument('-b', metavar='basedir', dest='base_dir', help='base directory')
+    argparser.add_argument('-d', metavar='exdir', dest='extract_dir', help='extract files into exdir')
+    argparser.add_argument('-p', dest='pattern', help='files pattern')
+    argparser.add_argument('files', nargs='+')
+    settings = argparser.parse_args()
+    unpackall(settings.files, base_dir=settings.base_dir, extract_dir=settings.extract_dir, pattern=settings.pattern)
+
+    

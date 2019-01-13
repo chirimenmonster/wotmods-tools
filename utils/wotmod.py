@@ -3,6 +3,7 @@ import zipfile
 from datetime import datetime
 import os
 
+import path as pathtool
 
 def _splitpath(path):
     head, tail = os.path.split(path)
@@ -48,4 +49,22 @@ class WotmodPackage(object):
                     file.writestr(zipinfo, '', zipfile.ZIP_STORED)
         timestamp = max([ d[2] for d in self.__list ])
         return timestamp
-    
+
+
+def createSimplePackage(filename, base_dir='', dest_dir=''):
+    wotmod = WotmodPackage()
+    for path in pathtool.getFileList([''], base_dir):
+        src = os.path.join(base_dir, path)
+        dst = os.path.join(dest_dir, path)
+        wotmod.add(src, dst)
+    wotmod.create(filename, zipfile.ZIP_STORED)
+
+
+if __name__ == '__main__':
+    argparser = ArgumentParser()
+    argparser.add_argument('-b', metavar='basedir', dest='base_dir', help='source base directory')
+    argparser.add_argument('-d', metavar='destdir', dest='dest_dir', help='destination base directory')
+    argparser.add_argument('zipfile')
+    settings = argparser.parse_args()
+
+    createSimplePackage(settings.zipfile, base_dir=settings.base_dir, dest_dir=settings.dest_dir)

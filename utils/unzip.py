@@ -18,11 +18,11 @@ class ZipPackage(zipfile.ZipFile):
         self.extractall(path, members)
 
 
-def do_command(options):
-    zip = ZipPackage(options['zipfile'], mode='r')
-    zip.options['list'] = options.get('list', False) 
-    if options.get('pattern', None):
-        zip.extract_pattern(options['extract_dir'], options['pattern'])
+def extractPattern(zipfile, extract_dir=None, pattern=None, opt_list=False):
+    zip = ZipPackage(zipfile, mode='r')
+    zip.options['list'] = opt_list
+    if pattern:
+        zip.extract_pattern(extract_dir, pattern)
 
 
 if __name__ == '__main__':
@@ -33,5 +33,4 @@ if __name__ == '__main__':
     argparser.add_argument('zipfile')
     argparser.add_argument('files', nargs='*')
     settings = argparser.parse_args()
-    do_command(vars(settings))
-    
+    extractPattern(settings.zipfile, extract_dir=settings.extract_dir, pattern=settings.pattern, opt_list=settings.list)
