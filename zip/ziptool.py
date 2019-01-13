@@ -2,10 +2,12 @@ from argparse import ArgumentParser
 import zipfile
 import re
 
+
 class ZipPackage(zipfile.ZipFile):
+    options = {}
 
     def extractall(self, *args):
-        if self.options.list:
+        if self.options['list']:
             members = self.namelist() if args < 2 else args[1]
             print '\n'.join(members)
         else:
@@ -17,10 +19,10 @@ class ZipPackage(zipfile.ZipFile):
 
 
 def do_command(options):
-    zip = ZipPackage(options.zipfile, mode='r')
-    zip.options = options
-    if options.pattern:
-        zip.extract_pattern(options.extract_dir, options.pattern)
+    zip = ZipPackage(options['zipfile'], mode='r')
+    zip.options['list'] = options.get('list', False) 
+    if options.get('pattern', None):
+        zip.extract_pattern(options['extract_dir'], options['pattern'])
 
 
 if __name__ == '__main__':
@@ -31,5 +33,5 @@ if __name__ == '__main__':
     argparser.add_argument('zipfile')
     argparser.add_argument('files', nargs='*')
     settings = argparser.parse_args()
-    do_command(settings)
+    do_command(vars(settings))
     

@@ -191,52 +191,27 @@ def pretty_xml(element, indent='', inline=False):
     return str
 
 
-def convert(src, dst, filenameRoot=False):
+def getElementTree(src, filenameRoot=False):
     xmlunpacker = XmlUnpacker()
     with open(src, 'rb') as infile:
         rootName = os.path.basename(src) if filenameRoot else 'root'
         root = xmlunpacker.read(infile, rootName=rootName)
-    text = pretty_xml(root)
+    return root
+
+
+def outputElementTree(tree, dst=None):
+    text = pretty_xml(tree)
     if dst:
-        with open(dst, 'wb') as outfile:
-            outfile.write(text)
+        dstdir = os.path.dirname(dst)
+        if not os.path.exists(dstdir):
+            os.makedirs(dstdir)
+        with open(dst, 'wb') as fp:
+            fp.write(text)
     else:
         sys.stdout.write(text)
 
-        
-def getFileList(files):
-    for path in files:
-        if os.path.isdir(path):
-            for root, dirs, files in os.walk(path):
-                for file in files:
-                    yield os.path.join(root, file)
-        else:
-            yield path
 
+def convert(src, dst, filenameRoot=False):
+    root = getElementTree(src, filenameRoot)
+    outputElementTree(root, dst)
 
-def do_command(options):
-    cwd = os.getcwd()
-    if options.base_dir:
-        os.chdir(options.base_dir)
-    for src in getFileList(options.files):
-        if options.pattern:
-            if not re.match(options.pattern, src):
-                continue
-        if options.extract_dir:
-            dst = os.path.join(cwd, options.extract_dir, src)
-            dstdir = os.path.dirname(dst)
-            if not os.path.exists(dstdir):
-                os.makedirs(dstdir)
-        else:
-            dst = None
-        convert(src, dst, True)
-
-
-if __name__ == '__main__':
-    argparser = ArgumentParser()
-    argparser.add_argument('-b', metavar='basedir', dest='base_dir', help='base directory')
-    argparser.add_argument('-d', metavar='exdir', dest='extract_dir', help='extract files into exdir')
-    argparser.add_argument('-p', dest='pattern', help='files pattern')
-    argparser.add_argument('files', nargs='+')
-    settings = argparser.parse_args()
-    do_command(settings)
