@@ -20,7 +20,7 @@ class XmlUnpacker:
             self.dict = self.readDictionary()
             root = ET.Element(rootName)
             self.readElement(root)
-            self.stream = None
+            #self.stream = None
             return root
         else:
             stream.seek(0)
