@@ -21,11 +21,11 @@ class XmlUnpacker:
             root = ET.Element(rootName)
             self.readElement(root)
             #self.stream = None
-            return root
         else:
             stream.seek(0)
-            tree = ET.fromstring(stream.read().decode('UTF-8'))
-            return tree
+            #root = ET.fromstring(stream.read().decode('UTF-8'))
+            root = ET.fromstring(stream.read())
+        return root
 
     def readElement(self, _base):
         children_count = unpack('<H', self.stream.read(2))[0]
