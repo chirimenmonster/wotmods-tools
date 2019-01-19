@@ -1,0 +1,3 @@
+[submodule "uncompyle2"]
+	path = uncompyle2
+	url = https://github.com/Mysterie/uncompyle2.git

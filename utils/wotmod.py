@@ -53,6 +53,7 @@ class WotmodPackage(object):
 
 def createSimplePackage(filename, base_dir='', dest_dir=''):
     wotmod = WotmodPackage()
+    print base_dir
     for path in pathtool.getFileList([''], base_dir):
         src = os.path.join(base_dir, path)
         dst = os.path.join(dest_dir, path)
