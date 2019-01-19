@@ -6,7 +6,7 @@ WoT の pkg ファイル展開、pyc デコンパイル、packed xml のテキ�
 
 ### 使い方
 
-python wottool.py [-b <WoT_install_dir>] command
+python wottool.py [-b <WoT_install_dir>] {version|xml|list|wotmod|decompile}
 
 ### version
 
@@ -49,3 +49,19 @@ XML 内のサブツリーを指定します。
   <value>False</value>
 </setting>
 ```
+
+### list
+
+python wottool.py [-b <WoT_install_dir>] xml -p package
+
+package 内のファイル一覧を取得します
+
+
+### decompile
+
+python wottool.py [-b <WoT_install_dir>] decompile target destdir
+
+`target` で指定した pyc ファイルをデコンパイルし、
+指定のディレクトリ `destdir` 内に出力します。
+デコンパイルには uncompyle2 が使われます。
+
