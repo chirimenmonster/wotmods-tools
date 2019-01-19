@@ -56,6 +56,20 @@ python wottool.py [-b <WoT_install_dir>] xml -p package
 
 package 内のファイル一覧を取得します
 
+```
+$ python2 wottool.py list -p gui.pkg | head
+gui/
+gui/ability_tooltips.xml
+gui/avatar_input_handler.xml
+gui/bc_vehicle_messages_panel.xml
+gui/bootcamp_blocked_settings.xml
+gui/EULA_templates.xml
+gui/flash/
+gui/flash/academyView.swf
+gui/flash/accountPopover.swf
+gui/flash/Achievements.swf
+...
+```
 
 ### decompile
 
