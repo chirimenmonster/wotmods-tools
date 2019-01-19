@@ -1,6 +1,17 @@
 import os
 import re
 
+_isNtPath = None
+
+
+def isNtPath():
+    global _isNtPath
+    if _isNtPath is None:
+        drive, _ = os.path.splitdrive(os.getcwd())
+        _isNtPath = True if drive else False
+    return _isNtPath
+
+
 def getFileList(files=None, base_dir=None, pattern=None):
     if files is None:
         files = [ '' ]

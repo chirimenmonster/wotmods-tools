@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from utils import wot
 from utils import XmlUnpacker
 
-DEFAULT_WOT_DIR = '/c/Games/World_of_Tanks'
+DEFAULT_WOT_DIR = 'C:/Games/World_of_Tanks'
 
 
 def show_version(args):
