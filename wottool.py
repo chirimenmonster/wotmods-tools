@@ -10,7 +10,13 @@ DEFAULT_WOT_DIR = 'C:/Games/World_of_Tanks'
 
 
 def show_version(args):
-    print wot.getWotVersion(base_dir=args.base_dir)
+    result = wot.getWotVersion(base_dir=args.base_dir)
+    if args.name:
+        print result['version']
+    elif args.build:
+        print result['build']
+    else:
+        print result['string']
 
 
 def fetch_xml(args):
@@ -49,6 +55,8 @@ if __name__ == '__main__':
     subparsers = parser.add_subparsers()
     
     parser_version = subparsers.add_parser('version')
+    parser_version.add_argument('-s', action='store_true', dest='name', help='show version name (folder name)')
+    parser_version.add_argument('-b', action='store_true', dest='build', help='show build number')
     parser_version.set_defaults(func=show_version)
 
     parser_xml = subparsers.add_parser('xml')
