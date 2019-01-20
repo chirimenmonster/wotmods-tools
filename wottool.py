@@ -1,8 +1,10 @@
+import os
 from argparse import ArgumentParser
 
 from utils import wot
 from utils import XmlUnpacker
 from utils import wotmod
+from utils import unzip
 
 DEFAULT_WOT_DIR = 'C:/Games/World_of_Tanks'
 
@@ -20,9 +22,15 @@ def fetch_xml(args):
         print result['text']
 
 
-def list(args):
-    for name in wot.listPackageFile(args.package, base_dir=args.base_dir):
-        print name
+def extract_zipfile(args):
+    path = wot.guessFilePath(args.file, base_dir=args.base_dir)
+    if path is None:
+        print 'unknwon file: ', path
+        return
+    if not args.dest_dir and not args.list:
+        print 'required option -d or -l'
+        return
+    unzip.extractPattern(path, extract_dir=args.dest_dir, pattern=args.regex, opt_list=args.list)
 
 
 def create_wotmod(args):
@@ -48,11 +56,14 @@ if __name__ == '__main__':
     parser_xml.add_argument('-x', metavar='xpath', dest='xpath', help='xpath')
     parser_xml.add_argument('file')
     parser_xml.set_defaults(func=fetch_xml)
-    
-    parser_xml = subparsers.add_parser('list')
-    parser_xml.add_argument('-p', metavar='package', dest='package', help='package file')
-    parser_xml.set_defaults(func=list)
-    
+       
+    parser_xml = subparsers.add_parser('unzip')
+    parser_xml.add_argument('-d', metavar='destdir', dest='dest_dir', help='dest base dir')
+    parser_xml.add_argument('-e', metavar='regex', dest='regex', help='match pattern')
+    parser_xml.add_argument('-l', action='store_true', dest='list', help='view file list')
+    parser_xml.add_argument('file')
+    parser_xml.set_defaults(func=extract_zipfile)
+
     parser_wotmod = subparsers.add_parser('wotmod')
     parser_wotmod.add_argument('target', nargs=1, help='base of target files')
     parser_wotmod.add_argument('file', nargs=1, help='wotmod package name')

@@ -72,6 +72,24 @@ def getWotVersion(base_dir=None):
     return version
 
 
+
+def guessFilePath(name, base_dir=None):
+    if os.path.isfile(name):
+        return name
+    _, ext = os.path.splitext(name)
+    if ext == '.pkg':
+        path = os.path.join(base_dir, 'res/packages', name)
+        if os.path.isfile(path):
+            return path
+    path = os.path.join(base_dir, name)
+    if os.path.isfile(path):
+        return path
+    path = os.path.join(base_dir, 'res', name)
+    if os.path.isfile(path):
+        return path
+    return None
+
+
 def fetchXmlData(file, base_dir=None, package=None):
     if package:
         _, ext = os.path.splitext(package)

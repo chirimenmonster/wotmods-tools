@@ -8,7 +8,7 @@ class ZipPackage(zipfile.ZipFile):
 
     def extractall(self, *args):
         if self.options['list']:
-            members = self.namelist() if args < 2 else args[1]
+            members = self.namelist() if len(args) < 2 else args[1]
             print '\n'.join(members)
         else:
             super(ZipPackage, self).extractall(*args)
@@ -23,7 +23,8 @@ def extractPattern(zipfile, extract_dir=None, pattern=None, opt_list=False):
     zip.options['list'] = opt_list
     if pattern:
         zip.extract_pattern(extract_dir, pattern)
-
+    else:
+        zip.extractall(extract_dir)
 
 if __name__ == '__main__':
     argparser = ArgumentParser()
