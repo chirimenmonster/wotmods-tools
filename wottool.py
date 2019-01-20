@@ -5,6 +5,7 @@ from utils import wot
 from utils import XmlUnpacker
 from utils import wotmod
 from utils import unzip
+from utils import uncompile
 
 DEFAULT_WOT_DIR = 'C:/Games/World_of_Tanks'
 
@@ -40,12 +41,12 @@ def extract_zipfile(args):
 
 
 def create_wotmod(args):
-    wotmod.createSimplePackage(args.file[0], base_dir=args.target[0], dest_dir='res')
+    wotmod.createSimplePackage(args.file, base_dir=args.target, dest_dir='res')
+    print 'created wotmod: {}'.format(args.file)
 
     
 def decompile(args):
-    from utils import uncompile
-    uncompile.uncompile_tree(args.target[0], args.dest[0])
+    uncompile.uncompile_tree(args.target, args.dest)
     
 
 if __name__ == '__main__':
@@ -73,13 +74,13 @@ if __name__ == '__main__':
     parser_xml.set_defaults(func=extract_zipfile)
 
     parser_wotmod = subparsers.add_parser('wotmod')
-    parser_wotmod.add_argument('target', nargs=1, help='base of target files')
-    parser_wotmod.add_argument('file', nargs=1, help='wotmod package name')
+    parser_wotmod.add_argument('target', help='base directory of target files')
+    parser_wotmod.add_argument('file', help='wotmod package name')
     parser_wotmod.set_defaults(func=create_wotmod)
 
     parser_decompile = subparsers.add_parser('decompile')
-    parser_decompile.add_argument('target', nargs=1, help='base of target files')
-    parser_decompile.add_argument('dest', nargs=1, help='dest base dir')
+    parser_decompile.add_argument('target', help='base of target files')
+    parser_decompile.add_argument('dest', help='dest base dir')
     parser_decompile.set_defaults(func=decompile)
         
     args = parser.parse_args()
