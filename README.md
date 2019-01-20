@@ -23,15 +23,31 @@ WoT の pkg ファイル展開、pyc デコンパイル、packed xml のテキ�
 
 ## wottool version
 
-python wottool.py [-b _WoT_install_dir_] version
+python wottool.py [-b _WoT_install_dir_] version [-b] [-s]
 
 WoT のバージョン情報を表示します。
+
+* __-b__:
+    バージョン文字列のうち、ビルド番号（# に続く数値）を表示します。
+* __-s__:
+    バージョン文字列のうち、バージョン番号（v. に続く文字列で # の前まで）を表示します。
+    res_mods や mods フォルダ下のバージョン別サブフォルダ名に相当します。
 
 ### 使用例
 
 ```
 > py -2 wottool.py version
-{'version': '1.3.0.1', 'string': 'v.1.3.0.1 #1111', 'build': '1111'}
+v.1.3.0.1 #1111
+```
+
+```
+> py -2 wottool.py version -s
+1.3.0.1
+```
+
+```
+> py -2 wottool.py -b c:/Games/World_of_Tanks_CT version -s
+1.4.0.0 Common Test
 ```
 
 ## wottool xml
