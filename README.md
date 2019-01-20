@@ -39,7 +39,7 @@ packed XML のファイルを通常の XML ファイル（テキスト形式）�
 * __-x__ _xpath_:
     表示する XML ファイル内のサブツリーを指定します。
     書式は xpath のサブセットです。
-* __file__:
+* _file_:
     変換対象の XML ファイルを指定します。
     絶対パス、相対パス、package ファイル内のパスが指定可能です。
     (必須)
@@ -60,6 +60,10 @@ packed XML のファイルを通常の XML ファイル（テキスト形式）�
 python wottool.py [-b _WoT_install_dir_] xml -p _package_
 
 package 内のファイル一覧を取得します
+
+* __-p__ _package_:
+    指定の package から XML ファイルを抽出します。
+    package 名は WoT インストールフォルダの `res/package` 内から選択します。
 
 ### 使用例
 
