@@ -7,6 +7,13 @@ python wottool.py [-b _WoT_install_dir_] {version | xml | list | wotmod | decomp
 WoT の pkg ファイル展開、pyc デコンパイル、packed xml のテキスト化、wotmod 作成支援などを行うツールです。
 実行には Python 2 が必要です。
 
+### コマンド
+
+* __version__: WoT のバージョン情報を表示します。
+* __xml__: packed XML のファイルを通常の XML ファイル（テキスト形式）に変換します。
+* __list__:　package 内のファイル一覧を取得します
+* __wotmod__: wotmod パッケージを作成します。
+* __decompile__: pyc ファイルをデコンパイルします。
 
 ### 共通オプション
 
@@ -59,7 +66,7 @@ packed XML のファイルを通常の XML ファイル（テキスト形式）�
 
 python wottool.py [-b _WoT_install_dir_] xml -p _package_
 
-package 内のファイル一覧を取得します
+package 内のファイル一覧を取得します。
 
 * __-p__ _package_:
     指定の package から XML ファイルを抽出します。
@@ -81,6 +88,15 @@ gui/flash/accountPopover.swf
 gui/flash/Achievements.swf
 ...
 ```
+
+## wottool wotmod
+
+python wottool.py wotmod _target_ _file_
+
+`target` で指定したディレクトリツリーを
+wotmod 形式（非圧縮ZIP）に変換し、`file` に出力します。
+`target` は wotmod 内の `res` ディレクトリの下に配置されます。
+
 
 ## wottool decompile
 
