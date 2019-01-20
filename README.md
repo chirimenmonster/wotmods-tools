@@ -54,6 +54,16 @@ packed XML のファイルを通常の XML ファイル（テキスト形式）�
 ### 使用例
 
 ```
+> py -2 wottool.py xml -x './/consoleFonts' resources.xml
+<consoleFonts>
+  <font>system_tiny.font</font>
+  <font>system_small.font</font>
+  <font>system_medium.font</font>
+  <font>system_large.font</font>
+</consoleFonts>
+```
+
+```
 > py -2 wottool.py xml -p gui.pkg -x './/setting[name="rememberPassVisible"]' gui/gui_settings.xml
 <setting>
   <name>rememberPassVisible</name>
