@@ -2,7 +2,7 @@
 
 ## wottool
 
-python wottool.py [-b _WoT_install_dir_] {version | xml | list | wotmod | decompile} <_command_specific_args_>
+python wottool.py [-h] [-b _WoT_install_dir_] {version | xml | unzip | wotmod | decompile} <_command_specific_args_>
 
 WoT の pkg ファイル展開、pyc デコンパイル、packed xml のテキスト化、wotmod 作成支援などを行うツールです。
 実行には Python 2 が必要です。
@@ -11,7 +11,7 @@ WoT の pkg ファイル展開、pyc デコンパイル、packed xml のテキ�
 
 * __version__: WoT のバージョン情報を表示します。
 * __xml__: packed XML のファイルを通常の XML ファイル（テキスト形式）に変換します。
-* __list__:　package 内のファイル一覧を取得します
+* __unzip__:　zip, pkg, wotmod ファイル、またはその一部を展開します。
 * __wotmod__: wotmod パッケージを作成します。
 * __decompile__: pyc ファイルをデコンパイルします。
 
@@ -62,31 +62,36 @@ packed XML のファイルを通常の XML ファイル（テキスト形式）�
 </setting>
 ```
 
-## wottool list
+## wottool unzip
 
-python wottool.py [-b _WoT_install_dir_] xml -p _package_
+python wottool.py [-b _WoT_install_dir_] unzip [-d _dest_dir_] [-e _regex_] [-l] _file_
 
-package 内のファイル一覧を取得します。
+zip ファイル、またはその一部を展開、またはファイル一覧を取得します。
 
-* __-p__ _package_:
-    指定の package から XML ファイルを抽出します。
-    package 名は WoT インストールフォルダの `res/package` 内から選択します。
+* __-d__ _dest_dir_:
+    指定のディレクトリ `dest_dir` にファイルを展開します。
+* __-e__ _regex_:
+    `regex` で指定した正規表現にマッチするものだけを対象とします。
+* __-l__:
+    ファイルを展開せず、ファイル名のリストを出力します。
+    このオプションが指定されたとき、オプション -d は無視されます。
+* _file_:
+    展開対象の zip ファイルを指定します。package ファイル、wotmod ファイルも指定できます。
+    絶対パス、相対パスの指定のほか、パッケージ名のみの指定も有効です。
 
 ### 使用例
 
 ```
-$ python2 wottool.py list -p gui.pkg | head
-gui/
-gui/ability_tooltips.xml
-gui/avatar_input_handler.xml
-gui/bc_vehicle_messages_panel.xml
-gui/bootcamp_blocked_settings.xml
-gui/EULA_templates.xml
-gui/flash/
-gui/flash/academyView.swf
-gui/flash/accountPopover.swf
-gui/flash/Achievements.swf
-...
+> py -2 wottool.py unzip -l -e 'gui/manual' gui.pkg
+gui/manual/
+gui/manual/chapter-1.xml
+gui/manual/chapter-2.xml
+gui/manual/chapter-3.xml
+gui/manual/chapter-4.xml
+gui/manual/chapter-5.xml
+gui/manual/chapter-6.xml
+gui/manual/chapter-7.xml
+gui/manual/chapters_list.xml
 ```
 
 ## wottool wotmod
