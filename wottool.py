@@ -49,7 +49,7 @@ def decompile(args):
     uncompile.uncompile_tree(args.target, args.dest)
     
 
-if __name__ == '__main__':
+def main(arg_list=None):
     parser = ArgumentParser()
     parser.add_argument('-b', metavar='basedir', dest='base_dir', help='wot directory', default=DEFAULT_WOT_DIR)
     
@@ -83,5 +83,9 @@ if __name__ == '__main__':
     parser_decompile.add_argument('dest', help='dest base dir')
     parser_decompile.set_defaults(func=decompile)
         
-    args = parser.parse_args()
+    args = parser.parse_args(arg_list)
     args.func(args)
+
+
+if __name__ == '__main__':
+    main()

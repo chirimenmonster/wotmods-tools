@@ -60,7 +60,7 @@ class WotXmlTree(ElementTree):
 
 
 def getWotVersion(base_dir=None):
-    path = os.path.join(base_dir or '', 'version.xml')
+    path = guessFilePath('version.xml', base_dir=base_dir)
     tree = WotXmlTree(path=path)
     string = tree.getElementAll('version')[0].text
     match = re.match(r'\s*(v\.([\d.]+[^#]*)\s+#([\d]+))\s*', string)
