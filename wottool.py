@@ -1,5 +1,6 @@
 import os
 from argparse import ArgumentParser
+from xml.etree import ElementTree
 
 from utils import wot
 from utils import XmlUnpacker
@@ -21,12 +22,19 @@ def show_version(args):
 
 
 def fetch_xml(args):
-    result = wot.fetchXmlData(args.file, base_dir=args.base_dir, package=args.package)
+    xml = wot.fetchXmlData(args.file, base_dir=args.base_dir, package=args.package)
     if args.xpath:
-        for e in result['data'].findall(args.xpath):
-            print XmlUnpacker.pretty_xml(e)
+        for e in xml['data'].findall(args.xpath):
+            if args.simple:
+                result = ElementTree.tostring(e)
+            else:
+                result = XmlUnpacker.pretty_xml(e)
     else:
-        print result['text']
+        if args.simple:
+            result = ElementTree.tostring(xml['data'])
+        else:
+            result = xml['text']
+    print result
 
 
 def extract_zipfile(args):
@@ -63,6 +71,7 @@ def main(arg_list=None):
     parser_xml = subparsers.add_parser('xml')
     parser_xml.add_argument('-p', metavar='package', dest='package', help='package file')
     parser_xml.add_argument('-x', metavar='xpath', dest='xpath', help='xpath')
+    parser_xml.add_argument('-s', action='store_true', dest='simple', help='output simple xml (not pretty)')
     parser_xml.add_argument('file')
     parser_xml.set_defaults(func=fetch_xml)
        

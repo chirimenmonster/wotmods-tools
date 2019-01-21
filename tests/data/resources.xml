@@ -1,8 +1,0 @@
-<resources.xml>
-    <consoleFonts>
-        <font>system_tiny.font</font>
-        <font>system_small.font</font>
-        <font>system_medium.font</font>
-        <font>system_large.font</font>
-    </consoleFonts>
-</resources.xml>
