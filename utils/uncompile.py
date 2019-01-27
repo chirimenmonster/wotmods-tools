@@ -39,5 +39,5 @@ def do_uncompile(src_base, out_base, files):
         if ext not in [ '.pyc', '.pyo' ]:
             continue
         dstfile = dstbase + '.py'
-        if os.path.isfile(dstfile):
+        if not os.path.isfile(dstfile):
             os.rename(outfile, dstfile)
