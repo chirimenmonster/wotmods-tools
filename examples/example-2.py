@@ -3,7 +3,10 @@ import sys
 import re
 import io
 import shutil
+from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 import utils.path
 from utils import unzip
@@ -52,7 +55,7 @@ def createmod_fontsize():
     
     
 def createmod_sniperview():
-    ORG_PKG = '/c/games/World_of_Tanks_EU/res/packages/scripts.pkg'
+    ORG_PKG = '/c/games/World_of_Tanks_CT/res/packages/scripts.pkg'
     PATTERN = '.*/item_defs/vehicles/.*\.xml'
     MOD_NAME = 'sniperview.wotmod'
     
@@ -61,18 +64,28 @@ def createmod_sniperview():
     print 'extract from pkg: {}, pattern={}'.format(ORG_PKG, PATTERN)
     unzip.extractPattern(ORG_PKG, extract_dir=WD_EXTRACT, pattern=PATTERN)
 
-    print 'modify XML files...'
+    #print 'modify XML files...'
+    print 'check XML files...'
     for file in utils.path.getFileList(base_dir=WD_EXTRACT, pattern=PATTERN):
         tree = wot.WotXmlTree(path=os.path.join(WD_EXTRACT, file))
-        if tree.removeTagAll('gunCamPosition'):
-            print 'edit XML file: {}'.format(file)
+        if tree.hasElement('gunCamPosition'):
+            for e in tree.findall('.//gunCamPosition/..'):
+                #print ElementTree.tostring(e.find('gunPosition'))
+                #print ElementTree.tostring(e.find('gunCamPosition'))
+                gunPosition = map(float, e.find('gunPosition').text.split())
+                gunCamPosition = map(float, e.find('gunCamPosition').text.split())
+                diff = [ w - v for v, w in zip(gunPosition, gunCamPosition) ]
+                print '{:<40}: ( {: <18} {: <18} {: <18} )'.format(file.replace('scripts/item_defs/vehicles/', ''), *diff)
             tree.output(os.path.join(WD_MODIFIED, file))
+        #if tree.removeTagAll('gunCamPosition'):
+        #    print 'edit XML file: {}'.format(file)
+        #    tree.output(os.path.join(WD_MODIFIED, file))
 
-    print 'create wotmod package: {}'.format(MOD_NAME)
-    wotmod.createSimplePackage(MOD_NAME, base_dir=WD_MODIFIED, dest_dir='res')
+    #print 'create wotmod package: {}'.format(MOD_NAME)
+    #wotmod.createSimplePackage(MOD_NAME, base_dir=WD_MODIFIED, dest_dir='res')
 
 
 if __name__ == '__main__':
     createmod_sniperview()
-    createmod_fontsize()
+    #createmod_fontsize()
     
