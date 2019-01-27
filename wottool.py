@@ -54,7 +54,7 @@ def create_wotmod(args):
 
     
 def decompile(args):
-    uncompile.uncompile_tree(args.target, args.dest)
+    uncompile.uncompile(args.target, args.dest)
     
 
 def main(arg_list=None):
