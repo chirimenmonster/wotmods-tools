@@ -23,7 +23,7 @@ rm -r ${workdir}
 
 python2 wottool.py unzip -d ${destdir} ${destdir}/${origpkgname}
 
-python2 wottool.py decompile ${releasebase}/${modreldir} ${workdir}
+python2 wottool.py decompile ${releasebase}/${modreldir}/${targetdst} ${workdir}
 
 patch -d ${workdir} -i ../src/${patchfile}
   
