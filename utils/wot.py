@@ -9,6 +9,33 @@ import XmlUnpacker
 import unzip
 
 
+class VPath(object):
+
+    def __init__(self, baseDir=None, packageName=None):
+        self.open(baseDir=baseDir, packageName=packageName)
+
+    def open(self, baseDir=None, packageName=None):
+        self.baseDir = baseDir
+        if packageName:
+            pkgPath = guessFilePath(packageName, base_dir=self.baseDir)
+            self.zip = unzip.ZipPackage(pkgPath, mode='r')
+        else:
+            self.zip = None
+    
+    def readFile(self, file):
+        if self.zip:
+            return self.zip.read(file)
+        path = guessFilePath(file, base_dir=self.baseDir)
+        with open(path, 'rb') as fp:
+            data = fp.read() 
+        return data
+    
+    def listPattern(self, pattern=None):
+        if self.zip:
+            return self.zip.list_pattern(pattern)
+        return None
+        
+
 class WotXmlTree(ElementTree):
 
     def __init__(self, data=None, path=None, rootName=None):
@@ -89,19 +116,25 @@ def guessFilePath(name, base_dir=None):
     return None
 
 
-def fetchXmlData(file, base_dir=None, package=None):
-    if package:
-        path = guessFilePath(package, base_dir=base_dir)
-        zip = unzip.ZipPackage(path, mode='r')
-        data = zip.read(file)
+def pickXmlElement(element, xpath=None):
+    if xpath:
+        return element.findall(xpath)
+    return [ element ]
+
+
+def fetchXmlList(base_dir=None, package=None, pattern=None, xpath=None, file=None):
+    vpath = VPath(baseDir=base_dir, packageName=package)
+    result = []
+    if pattern:
+        files = vpath.listPattern(pattern=pattern)
+    elif file:
+        files = [ file ]
     else:
-        path = guessFilePath(file, base_dir=base_dir)
-        with open(path, 'rb') as fp:
-            data = fp.read() 
-    xmlunpacker = XmlUnpacker.XmlUnpacker()
-    tree = xmlunpacker.read(io.BytesIO(data), os.path.basename(file))
-    if xmlunpacker.isPacked():
-        text = XmlUnpacker.pretty_xml(tree)
-    else:
-        text = data
-    return { 'data': tree, 'text': text }
+        raise Error
+    for f in files:
+        data = vpath.readFile(f)
+        xmlunpacker = XmlUnpacker.XmlUnpacker()
+        tree = xmlunpacker.read(io.BytesIO(data), os.path.basename(f))
+        list = [ (f, e) for e in pickXmlElement(tree, xpath) ]
+        result.extend(list)
+    return result

@@ -20,21 +20,17 @@ def show_version(args):
     else:
         print result['string']
 
-
+        
 def fetch_xml(args):
-    xml = wot.fetchXmlData(args.file, base_dir=args.base_dir, package=args.package)
-    if args.xpath:
-        for e in xml['data'].findall(args.xpath):
-            if args.simple:
-                result = ElementTree.tostring(e)
-            else:
-                result = XmlUnpacker.pretty_xml(e)
-    else:
+    result = wot.fetchXmlList(base_dir=args.base_dir, package=args.package, pattern=args.regex, xpath=args.xpath, file=args.file)
+    for data in result:
         if args.simple:
-            result = ElementTree.tostring(xml['data'])
+            text = [ ElementTree.tostring(data[1]) ]
         else:
-            result = xml['text']
-    print result
+            text = XmlUnpacker.pretty_xml(data[1]).rstrip('\n').split('\n')
+        header = data[0] + ': ' if args.withfilename else '' 
+        for line in text:
+                print header + line
 
 
 def extract_zipfile(args):
@@ -70,17 +66,19 @@ def main(arg_list=None):
 
     parser_xml = subparsers.add_parser('xml')
     parser_xml.add_argument('-p', metavar='package', dest='package', help='package file')
+    parser_xml.add_argument('-e', metavar='regex', dest='regex', help='file match pattern')
     parser_xml.add_argument('-x', metavar='xpath', dest='xpath', help='xpath')
+    parser_xml.add_argument('-H', action='store_true', dest='withfilename', help='print file name with output lines')
     parser_xml.add_argument('-s', action='store_true', dest='simple', help='output simple xml (not pretty)')
-    parser_xml.add_argument('file')
+    parser_xml.add_argument('file', nargs='?')
     parser_xml.set_defaults(func=fetch_xml)
-       
-    parser_xml = subparsers.add_parser('unzip')
-    parser_xml.add_argument('-d', metavar='destdir', dest='dest_dir', help='dest base dir')
-    parser_xml.add_argument('-e', metavar='regex', dest='regex', help='match pattern')
-    parser_xml.add_argument('-l', action='store_true', dest='list', help='view file list')
-    parser_xml.add_argument('file')
-    parser_xml.set_defaults(func=extract_zipfile)
+
+    parser_unzip = subparsers.add_parser('unzip')
+    parser_unzip.add_argument('-d', metavar='destdir', dest='dest_dir', help='dest base dir')
+    parser_unzip.add_argument('-e', metavar='regex', dest='regex', help='match pattern')
+    parser_unzip.add_argument('-l', action='store_true', dest='list', help='view file list')
+    parser_unzip.add_argument('file')
+    parser_unzip.set_defaults(func=extract_zipfile)
 
     parser_wotmod = subparsers.add_parser('wotmod')
     parser_wotmod.add_argument('target', help='base directory of target files')

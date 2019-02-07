@@ -14,8 +14,13 @@ class ZipPackage(zipfile.ZipFile):
             super(ZipPackage, self).extractall(*args)
 
     def extract_pattern(self, path, pattern):
-        members = [ f for f in self.namelist() if re.match(pattern, f) ]
+        members = self.list_pattern(pattern)
         self.extractall(path, members)
+
+    def list_pattern(self, pattern=None):
+        if pattern:
+            return [ f for f in self.namelist() if re.match(pattern, f) ]
+        return self.namelist()
 
 
 def extractPattern(zipfile, extract_dir=None, pattern=None, opt_list=False):
@@ -34,4 +39,4 @@ if __name__ == '__main__':
     argparser.add_argument('zipfile')
     argparser.add_argument('files', nargs='*')
     settings = argparser.parse_args()
-    extractPattern(settings.zipfile, extract_dir=settings.extract_dir, pattern=settings.pattern, opt_list=settings.list)
+    listPattern(settings.zipfile, extract_dir=settings.extract_dir, pattern=settings.pattern, opt_list=settings.list)
