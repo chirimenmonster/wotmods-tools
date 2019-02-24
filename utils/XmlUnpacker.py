@@ -161,11 +161,16 @@ class XmlUnpacker:
         return True
 
 
-def pretty_xml(element, indent='', inline=False):
-    has_text = element.text or element.tail
+def pretty_xml(element, indent='', inline=False, strip=False):
+    text_head = element.text
+    text_tail = element.tail
+    if strip:
+        text_head = (text_head or None) and text_head.strip()
+        text_tail = (text_tail or None) and text_tail.strip()
+    has_text = text_head or text_tail
     has_item = has_text or len(element)
     if not inline and not has_text:
-        next_indent = indent + '  '
+        next_indent = indent + ' ' * 2
     else:
         next_indent = ''
     str = ''
@@ -177,14 +182,14 @@ def pretty_xml(element, indent='', inline=False):
             str += '\n'
         return str
     str += '<{}>'.format(element.tag)
-    if element.text:
-        str += escape(element.text)
+    if text_head:
+        str += escape(text_head)
     if not inline and not has_text and has_item:
         str += '\n'
     for e in list(element):
-        str += pretty_xml(e, next_indent, inline or has_text)
-    if element.tail:
-        str += escape(element.tail)
+        str += pretty_xml(e, next_indent, inline=inline or has_text, strip=strip)
+    if text_tail:
+        str += escape(text_tail)
     if not inline and not has_text and has_item:
         str += indent
     str += '</{}>'.format(element.tag)

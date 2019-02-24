@@ -64,6 +64,7 @@ class SubCommandXml(SubCommand):
         parser.add_argument('-x', metavar='xpath', dest='xpath', help='xpath')
         parser.add_argument('-H', action='store_true', dest='withfilename', help='print file name with output lines')
         parser.add_argument('-s', action='store_true', dest='simple', help='output simple xml (not pretty)')
+        parser.add_argument('-N', action='store_true', dest='normalize', help='strip leading and trailing whitespaces in text node')
         parser.add_argument('file', nargs='?')
         return parser
 
@@ -73,7 +74,7 @@ class SubCommandXml(SubCommand):
             if args.simple:
                 text = [ ElementTree.tostring(data[1]) ]
             else:
-                text = XmlUnpacker.pretty_xml(data[1]).rstrip('\n').split('\n')
+                text = XmlUnpacker.pretty_xml(data[1], strip=args.normalize).rstrip('\n').split('\n')
             header = data[0] + ': ' if args.withfilename else '' 
             for line in text:
                 print header + line
