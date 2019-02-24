@@ -7,6 +7,7 @@ from xml.etree.ElementTree import ElementTree
 
 import XmlUnpacker
 import unzip
+from exceptions import ApplicationError
 
 
 class VPath(object):
@@ -18,7 +19,12 @@ class VPath(object):
         self.baseDir = baseDir
         if packageName:
             pkgPath = guessFilePath(packageName, base_dir=self.baseDir)
-            self.zip = unzip.ZipPackage(pkgPath, mode='r')
+            if pkgPath is None:
+                raise Exception('package is not found: {}'.format(packageName))
+            try:
+                self.zip = unzip.ZipPackage(pkgPath, mode='r')
+            except:
+                raise Exception('cannot open package: {}'.format(pkgPath))
         else:
             self.zip = None
     
@@ -100,6 +106,8 @@ def getWotVersion(base_dir=None):
 
 
 def guessFilePath(name, base_dir=None):
+    if base_dir is not None and not os.path.isdir(base_dir):
+        raise IOError('base dir is not found: \'{}\''.format(base_dir))
     if os.path.isfile(name):
         return name
     _, ext = os.path.splitext(name)
@@ -130,7 +138,7 @@ def fetchXmlList(base_dir=None, package=None, pattern=None, xpath=None, file=Non
     elif file:
         files = [ file ]
     else:
-        raise Error
+        raise ApplicationError('require file or pattern')
     for f in files:
         data = vpath.readFile(f)
         xmlunpacker = XmlUnpacker.XmlUnpacker()

@@ -55,7 +55,7 @@ def createmod_fontsize():
     
     
 def createmod_sniperview():
-    ORG_PKG = '/c/games/World_of_Tanks_CT/res/packages/scripts.pkg'
+    ORG_PKG = '/c/games/World_of_Tanks_EU/res/packages/scripts.pkg'
     PATTERN = '.*/item_defs/vehicles/.*\.xml'
     MOD_NAME = 'sniperview.wotmod'
     
