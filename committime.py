@@ -51,6 +51,8 @@ class CommitTime(object):
 
     def setChangeTime(self, files):
         for f in files:
+            if not os.path.exists(f):
+                continue
             mtime = int(os.stat(f).st_mtime)
             self.__timestamp[f] = mtime
  
