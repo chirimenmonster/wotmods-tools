@@ -1,3 +1,4 @@
+import sys
 import os
 import re
 import shutil
@@ -45,7 +46,11 @@ class Config(object):
     def __init__(self, config=CONFIG):
         inifile = ConfigParser.SafeConfigParser()
         inifile.read(config)
-        self.__params = dict(inifile.items(SECTION_WOTMOD))
+        try:
+            self.__params = dict(inifile.items(SECTION_WOTMOD))
+        except:
+            sys.stderr.write('not found section "{}" in "{}"'.format(SECTION_WOTMOD, config))
+            sys.exit(1)
         for section in inifile.sections():
             for k, v in inifile.items(section):
                 self.__params[section + '_' + k] = v
@@ -89,6 +94,9 @@ class Control(object):
 
     def makePackage(self, domain=SECTION_WOTMOD, compression=zipfile.ZIP_STORED):
         pkgsrcs = self.__params.get(PKGDEF[domain])
+        if not pkgsrcs:
+            sys.stderr.write('not def "{}"'.format(PKGDEF[domain]))
+            sys.exit(1)
         pkgname = os.path.join(self.__params.buildDir, self.__params.get(PKGNAME[domain]))
         resources = Resources(pkgsrcs, self.__params, self.__commitTime)
         #resources.dump()
@@ -106,8 +114,12 @@ class Resources(object):
     def __init__(self, filename, params, commitTime):
         self.__commitTime = commitTime
         self.__params = params
-        with open(filename, 'r') as file:
-            text = Template(file.read()).substitute(self.__params.dict)
+        try:
+            with open(filename, 'r') as file:
+                text = Template(file.read()).substitute(self.__params.dict)
+        except:
+            sys.stderr.write('cannot open file: "{}"'.format(filename))
+            sys.exit(1)
         self.__resource = json.loads(text)
         self.__recipes = []
         for desc in self.__resource['sources']:
