@@ -10,6 +10,7 @@ import ConfigParser
 import json
 from string import Template
 from datetime import datetime
+import traceback
 
 import committime
 
@@ -119,7 +120,8 @@ class Resources(object):
         try:
             with open(filename, 'r') as file:
                 text = Template(file.read()).substitute(self.__params.dict)
-        except:
+        except Exception as e:
+            sys.stderr.write(traceback.format_exc())
             sys.stderr.write('cannot open file: "{}"'.format(filename))
             sys.exit(1)
         self.__resource = json.loads(text)
@@ -166,7 +168,7 @@ class Resources(object):
 
     def __getRecipe(self, src, reldir, desc):
         timestamp = self.__commitTime.getTimestamp(src)
-        recipe = Recipe(src, reldir, desc, timestamp, self.__params)
+        recipe = Recipe(src, reldir, desc, timestamp, self.__params, desc)
         return recipe
 
 
@@ -175,11 +177,13 @@ class Process(object):
     def __init__(self):
         self.__feature = {
             'python':       self.__feature_compile,
-            'apply':        self.__feature_apply
+            'apply':        self.__feature_apply,
+            'copy':         self.__feature_copy
         }
         self.__getFilename = {
             'python':       self.__getFilename_compile,
-            'apply':        self.__getFilename_apply
+            'apply':        self.__getFilename_apply,
+            'copy':         self.__getFilename_copy
         }
 
     def command(self, recipe):
@@ -188,11 +192,11 @@ class Process(object):
             file = self.__feature[p.method](p.src, p.dst, recipe)
         return file, recipe.vpath, recipe.timestamp
 
-    def getFilename(self, method, file, buildDir):
+    def getFilename(self, method, file, buildDir, desc):
         process = []
         for m in method.split('+'):
             if m != 'plain':
-                newfile = self.__getFilename[m](file, buildDir)
+                newfile = self.__getFilename[m](file, buildDir, desc)
                 process.append(ProcessDesc(m, file, newfile))
                 file = newfile
         return process
@@ -207,13 +211,13 @@ class Process(object):
             dir = os.path.join(buildDir, dir)
         return dir
 
-    def __getFilename_compile(self, src, buildDir):
+    def __getFilename_compile(self, src, buildDir, desc):
         dir, file = os.path.split(src)
         dstdir = self.__getDstdir(dir, buildDir)
         name, ext = os.path.splitext(file)
         return os.path.join(dstdir, name + '.pyc')
 
-    def __getFilename_apply(self, src, buildDir):
+    def __getFilename_apply(self, src, buildDir, desc):
         dir, file = os.path.split(src)
         dstdir = self.__getDstdir(dir, buildDir)
         name, ext = os.path.splitext(file)
@@ -225,6 +229,14 @@ class Process(object):
                 dst = os.path.join(dstdir, inname + ext)
             else:
                 dst = os.path.join(dstdir, name + ext)
+        return dst
+
+    def __getFilename_copy(self, src, buildDir, desc):
+        dir, file = os.path.split(src)
+        dstdir = self.__getDstdir(dir, buildDir)
+        pattern, string = desc.get('replace')
+        dstfile = re.sub(pattern, string, file)
+        dst = os.path.join(dstdir, dstfile)
         return dst
 
     def __feature_compile(self, src, dst, recipe):
@@ -241,6 +253,12 @@ class Process(object):
         makedirs(os.path.dirname(dst))
         with open(src, 'r') as in_file, open(dst, 'w') as out_file:
             out_file.write(Template(in_file.read()).substitute(recipe.params.dict))
+        return dst
+
+    def __feature_copy(self, src, dst, recipe):
+        makedirs(os.path.dirname(dst))
+        shutil.copyfile(src, dst)
+        os.utime(dst, (recipe.timestamp, recipe.timestamp))
         return dst
 
 
@@ -283,12 +301,12 @@ class ZipPackage(object):
 
 class Recipe(object):
 
-    def __init__(self, file, reldir, target, timestamp, params):
+    def __init__(self, file, reldir, target, timestamp, params, desc):
         self.file = file
         self.reldir = reldir
         self.target = target
         self.params = params
-        self.process = Process().getFilename(self.method, file, params.buildDir)
+        self.process = Process().getFilename(self.method, file, params.buildDir, desc)
         self.timestamp = Process().getTimestamp(self.method, timestamp, params.timestamp)
  
     @property
