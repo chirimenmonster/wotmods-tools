@@ -130,7 +130,7 @@ def pickXmlElement(element, xpath=None):
     return [ element ]
 
 
-def fetchXmlList(base_dir=None, package=None, pattern=None, xpath=None, file=None):
+def fetchXmlList(base_dir=None, package=None, pattern=None, xpath=None, file=None, root=None):
     vpath = VPath(baseDir=base_dir, packageName=package)
     result = []
     if pattern:
@@ -142,7 +142,8 @@ def fetchXmlList(base_dir=None, package=None, pattern=None, xpath=None, file=Non
     for f in files:
         data = vpath.readFile(f)
         xmlunpacker = XmlUnpacker.XmlUnpacker()
-        tree = xmlunpacker.read(io.BytesIO(data), os.path.basename(f))
+        rootName = os.path.basename(f) if root is None else root
+        tree = xmlunpacker.read(io.BytesIO(data), rootName)
         list = [ (f, e) for e in pickXmlElement(tree, xpath) ]
         result.extend(list)
     return result
