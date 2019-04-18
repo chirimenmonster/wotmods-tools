@@ -6,13 +6,24 @@ from datetime import *
 
 
 def getFileList():
-    return commands.getoutput('git ls-files -z').split('\0')[:-1]
+    status, result = commands.getstatusoutput('git ls-files -z')
+    if status != 0:
+        return None
+    result = result.split('\0')[:-1]
+    return result
 
 def getGitCommitLogs():
-    return commands.getoutput('git log -r --name-only --no-color --pretty=raw -z').split('\0\0')
+    status, result = commands.getstatusoutput('git log -r --name-only --no-color --pretty=raw -z')
+    if status != 0:
+        return None
+    result = result.split('\0\0')
+    return result
 
 def getChangeFiles():
-    result = commands.getoutput('git diff --ignore-cr-at-eol --numstat').split('\n')
+    status, result = commands.getstatusoutput('git diff --ignore-cr-at-eol --numstat')
+    if status != 0:
+        return None
+    result = result.split('\n')
     result = filter(lambda s: not re.match(r'0\t0\t.*$', s), result)
     result = map(lambda s: s.split('\t')[2], result)
     return result
@@ -20,10 +31,13 @@ def getChangeFiles():
 class CommitTime(object):
 
     def __init__(self):
+        self.__timestamp = {}
         filelist = getFileList()
+        if filelist is None:
+            self.lastupdate = 0
+            return
         logs = getGitCommitLogs()
         changefiles = getChangeFiles()
-        self.__timestamp = {}
         self.setCommitTime(logs, filelist)
         self.setChangeTime(changefiles)
         self.lastupdate = max(self.__timestamp.values())
