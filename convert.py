@@ -4,6 +4,7 @@ import sys
 import os
 import shutil
 import argparse
+import re
 from logging import getLogger, StreamHandler, INFO
 from zipfile import ZipFile
 
@@ -20,8 +21,9 @@ logger.addHandler(handler)
 
 class Config:
     WD = 'tmp'
-    package = ''
-    outdir = WD
+    base_dir = 'C:\Games\World_of_Tanks'
+    pkgfile = None
+    outdir = None
 
 def extractZipfile(file, wdir):
     with ZipFile(file, 'r') as zip:
@@ -76,13 +78,35 @@ def convertXml(path):
                     print text
                     print target, e
                     
+def guessOutputDir(args):
+    result = wot.getWotVersion(base_dir=args.base_dir)
+    version = result['version']
+    build = result['build']
+    match = re.match(r'.*World_of_Tanks(_([^\\/]*))?[\\/]?', args.base_dir)
+    if match:
+        region = match.group(2)
+        if region is None:
+            region = 'ASIA'
+    else:
+        assert()
+    outdir = '{}#{}'.format(region, build)
+    args.outdir = os.path.join(args.WD, outdir)
+
+def guessPkgFile(args):
+    args.pkgfile = os.path.join(args.base_dir, 'res/packages/scripts.pkg')
 
 if __name__ == '__main__':
     config = Config()
     parser = argparse.ArgumentParser()
+    parser.add_argument('-b', dest='base_dir', help='base dir')
     parser.add_argument('-o', dest='outdir', help='output dir')
     parser.add_argument('-p', dest='pkgfile', help='pkg file')
-    parser.parse_args(namespace=config)
+    args = parser.parse_args(namespace=config)
+
+    if not config.outdir:
+        guessOutputDir(args)
+    if not config.pkgfile:
+        guessPkgFile(args)
 
     head, tail = os.path.split(config.outdir)
     config.outdir = os.path.join(head, tail) if tail else head
