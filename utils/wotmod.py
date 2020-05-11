@@ -1,7 +1,9 @@
+
+import os
+import time
+from datetime import datetime
 from argparse import ArgumentParser
 import zipfile
-from datetime import datetime
-import os
 
 import path as pathtool
 
@@ -47,17 +49,25 @@ class WotmodPackage(object):
                         file.writestr(zipinfo, f.read(), compression)
                 else:
                     file.writestr(zipinfo, '', zipfile.ZIP_STORED)
+            for f in file.infolist():
+                c = 'STORE' if f.compress_type == 0 else 'DEFLATED'
+                t = time.strftime('%Y-%m-%d %H:%M:%S', f.date_time)
+                print '{time}  {type:8s}  {name}'.format(name=f.filename, type=c, time=t)
         timestamp = max([ d[2] for d in self.__list ])
         return timestamp
 
 
-def createSimplePackage(filename, base_dir='', dest_dir=''):
+def createSimplePackage(filename, base_dir='', dest_dir='', meta=[]):
     wotmod = WotmodPackage()
-    print base_dir
-    for path in pathtool.getFileList([''], base_dir):
-        src = os.path.join(base_dir, path)
-        dst = os.path.join(dest_dir, path)
-        wotmod.add(src, dst)
+    def addfile(files, base_dir, dest_dir):
+        for path in pathtool.getFileList(files=files, base_dir=base_dir):
+            src = os.path.join(base_dir, path)
+            dst = os.path.normpath(os.path.join(dest_dir, path))
+            wotmod.add(src, dst)
+    for m in meta:
+        d, f = os.path.split(os.path.normpath(m))
+        addfile(f, d, '')
+    addfile('', base_dir, dest_dir)
     wotmod.create(filename, zipfile.ZIP_STORED)
 
 

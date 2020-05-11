@@ -98,11 +98,16 @@ class SubCommandUnzip(SubCommand):
 
 class SubCommandWotmod(SubCommand):
     def setParser(self, parser):
-        parser.add_argument('target', help='base directory of target files')
-        parser.add_argument('file', help='wotmod package name')
+        parser.add_argument('-o', metavar='file', dest='file', required=True, help='wotmod package name')
+        parser.add_argument('-d', metavar='target_dir', dest='comp_dir', help='directory of target files')
+        parser.add_argument('-r', metavar='res_dir', dest='res_dir', help='base directory of res')
+        parser.add_argument('-m', metavar='meta_file', dest='meta', action='append', help='optional files (ex. meta.xml)')
 
     def command(self, args):
-        wotmod.createSimplePackage(args.file, base_dir=args.target, dest_dir='res')
+        if args.comp_dir:
+            wotmod.createSimplePackage(args.file, base_dir=args.comp_dir)
+        elif args.res_dir:
+            wotmod.createSimplePackage(args.file, base_dir=args.res_dir, dest_dir='res', meta=args.meta)
         print 'created wotmod: {}'.format(args.file)
 
 
