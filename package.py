@@ -232,11 +232,12 @@ class Process(object):
         return dst
 
     def __getFilename_copy(self, src, buildDir, desc):
-        dir, file = os.path.split(src)
-        dstdir = self.__getDstdir(dir, buildDir)
-        pattern, string = desc.get('replace')
-        dstfile = re.sub(pattern, string, file)
-        dst = os.path.join(dstdir, dstfile)
+        dir_, file = os.path.split(src)
+        dstdir = self.__getDstdir(dir_, buildDir)
+        if 'replace' in desc:
+            pattern, string = desc.get('replace')
+            file = re.sub(pattern, string, file)
+        dst = os.path.join(dstdir, file)
         return dst
 
     def __feature_compile(self, src, dst, recipe):
